@@ -1,7 +1,3 @@
-// © 2023 Bill Chow. All rights reserved.
-// Unauthorized use, modification, or distribution of this code is strictly
-// prohibited.
-
 function foo() {
     console.time("foo")
     let N = 10000000

@@ -243,9 +243,3 @@ Constant pool (size 1)
 ### Credits
 This project was inspired by the book
 [*Crafting Interpreters*](https://craftinginterpreters.com/) by Robert Nystrom.
-
-### License
-Copyright © 2023 Bill Chow. All rights reserved.
-
-This repository is made available for evaluation purposes by authorized individuals only.
-Unauthorized use, reproduction, modification, or distribution of this code is strictly prohibited.
