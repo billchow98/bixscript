@@ -3,68 +3,52 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/billchow98/bixscript/cmd/bix/internal/runtime"
 	"log"
 	"os"
-	"strings"
-	"unicode"
+
+	"github.com/billchow98/bixscript/cmd/bix/internal/repl"
+	"github.com/billchow98/bixscript/cmd/bix/internal/runtime"
 )
 
-const (
-	VersionMajor = 0
-	VersionMinor = 0
-	VersionPatch = 1
+var (
+	// Version is set at build time via -ldflags
+	Version = "dev"
 )
 
 func runRepl() {
-	log.Printf("bix v%d.%d.%d\n", VersionMajor, VersionMinor, VersionPatch)
+	fmt.Printf("bix %s\n", Version)
+	fmt.Println()
+	fmt.Println("Type BixScript code and press Enter to execute.")
+	fmt.Println("Commands: syntax, clear, reset, bytecode [on|off], help")
+	fmt.Println()
 
-	v := runtime.New()
+	r := repl.New()
+	scanner := bufio.NewScanner(os.Stdin)
 
-	for {
-		s := bufio.NewScanner(os.Stdin)
+	fmt.Print("\x1b[1;36m>>> \x1b[0m")
 
-		input := ""
+	for scanner.Scan() {
+		line := scanner.Text()
 
-		fmt.Print(">>> ")
+		result := r.AddLine(line)
 
-		leftBraceCount := 0
+		// Print output if any (contains ANSI color codes)
+		if result.Output != "" {
+			fmt.Print(result.Output)
+		}
 
-	loop:
-		for s.Scan() {
-			input += s.Text() + string('\n')
-
-			if str := strings.TrimLeftFunc(s.Text(), unicode.IsSpace); len(str) > 0 && str[0] == '}' {
-				leftBraceCount--
-			}
-
-			if len(s.Text()) > 0 {
-				switch s.Text()[len(s.Text())-1] {
-				case '{':
-					leftBraceCount++
-					fmt.Print("... ")
-				case '\\':
-					fmt.Print("... ")
-				default:
-					if leftBraceCount > 0 {
-						fmt.Print("... ")
-					} else {
-						break loop
-					}
-				}
-			} else {
-				break
+		// Print errors if any (in red)
+		if len(result.Errors) > 0 {
+			for _, err := range result.Errors {
+				fmt.Printf("\x1b[31m%s\x1b[0m\n", err)
 			}
 		}
 
-		errs := v.Run(input, "<stdin>")
-		if errs != nil {
-			// REPLs are friendly!
-			if errs != nil {
-				for _, err := range errs {
-					log.Println(err)
-				}
-			}
+		// Print next prompt with color
+		if result.PromptSymbol == ">>> " {
+			fmt.Print("\x1b[1;36m>>> \x1b[0m")
+		} else {
+			fmt.Print("\x1b[1;33m... \x1b[0m")
 		}
 	}
 }

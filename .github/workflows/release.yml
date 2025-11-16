@@ -1,0 +1,127 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  build-binaries:
+    name: Build ${{ matrix.goos }}-${{ matrix.goarch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          # Linux
+          - goos: linux
+            goarch: amd64
+            os: ubuntu-latest
+          # macOS Intel
+          - goos: darwin
+            goarch: amd64
+            os: macos-latest
+          # macOS Apple Silicon
+          - goos: darwin
+            goarch: arm64
+            os: macos-latest
+          # Windows
+          - goos: windows
+            goarch: amd64
+            os: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          VERSION="${{ github.ref_name }}"
+          cd cmd/bix
+          go build -ldflags "-X main.Version=$VERSION" -o bix${{ matrix.goos == 'windows' && '.exe' || '' }}
+
+      - name: Rename binary
+        run: |
+          cd cmd/bix
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            mv bix.exe bix-${{ github.ref_name }}-${{ matrix.goos }}-${{ matrix.goarch }}.exe
+          else
+            mv bix bix-${{ github.ref_name }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bix-${{ github.ref_name }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}
+          path: cmd/bix/bix-${{ github.ref_name }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}
+
+  build-wasm:
+    name: Build WASM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Build WASM
+        env:
+          GOOS: js
+          GOARCH: wasm
+        run: |
+          VERSION="${{ github.ref_name }}"
+          cd cmd/bix/wasm
+          go build -ldflags "-X main.Version=$VERSION" -o bixscript.wasm
+
+      - name: Copy wasm_exec.js
+        run: |
+          cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" cmd/bix/wasm/
+
+      - name: Create WASM archive
+        run: |
+          cd cmd/bix/wasm
+          tar -czf bixscript-${{ github.ref_name }}-wasm.tar.gz bixscript.wasm wasm_exec.js
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bixscript-${{ github.ref_name }}-wasm.tar.gz
+          path: cmd/bix/wasm/bixscript-${{ github.ref_name }}-wasm.tar.gz
+
+  release:
+    name: Create Release
+    needs: [build-binaries, build-wasm]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/*/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

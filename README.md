@@ -31,6 +31,56 @@ variadic functions
 - User-defined classes
 - Standard library
 
+### Build
+
+**Using Make (recommended):**
+```bash
+make build          # Build terminal binary with version detection
+make build-wasm     # Build WebAssembly binary
+make clean          # Remove build artifacts
+make version        # Show current version
+```
+
+**Manual build:**
+```bash
+# Terminal binary
+cd cmd/bix && go build -o bix
+
+# WebAssembly
+cd cmd/bix/wasm && GOOS=js GOARCH=wasm go build -o bixscript.wasm
+```
+
+**Cross-platform builds:**
+```bash
+# Linux
+GOOS=linux GOARCH=amd64 go build -o bix-linux ./cmd/bix
+
+# macOS (Intel)
+GOOS=darwin GOARCH=amd64 go build -o bix-darwin-amd64 ./cmd/bix
+
+# macOS (Apple Silicon)
+GOOS=darwin GOARCH=arm64 go build -o bix-darwin-arm64 ./cmd/bix
+
+# Windows
+GOOS=windows GOARCH=amd64 go build -o bix.exe ./cmd/bix
+```
+
+**Version injection:**
+
+The Makefile automatically detects the version:
+- On a git tag: shows the tag (e.g., `0.1.0`)
+- Otherwise: shows `branch-commit` (e.g., `master-abc1234`)
+- Dirty working tree: shows `branch-commit-dirty`
+
+To manually inject a version:
+```bash
+go build -ldflags "-X main.Version=1.0.0" ./cmd/bix
+```
+
+### Download
+
+Pre-built binaries for Linux, macOS, Windows, and WebAssembly are available on the [releases page](https://github.com/billchow98/bixscript/releases).
+
 ### Examples
 #### Naive Fibonacci
 Code
@@ -47,7 +97,11 @@ print(fib(35))
 
 Sample REPL output with bytecode assembly
 ```javascript
-2024/09/14 12:16:48 bix.go:20: bix v0.0.1
+bix v0.0.1
+
+Type BixScript code and press Enter to execute.
+Commands: clear, reset, bytecode [on|off], help
+
 >>> function fib(n) {
 ...     if n <= 1 {
 ...         return n
@@ -139,7 +193,11 @@ foo()
 
 Sample REPL output with bytecode assembly
 ```javascript
-2024/09/14 12:38:35 bix.go:20: bix v0.0.1
+bix v0.0.1
+
+Type BixScript code and press Enter to execute.
+Commands: clear, reset, bytecode [on|off], help
+
 >>> function foo() {
 ...     let N = 10000000
 ...     let sum = 0.0

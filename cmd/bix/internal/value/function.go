@@ -7,7 +7,6 @@ import (
 	"github.com/billchow98/bixscript/cmd/bix/internal/token"
 	"log"
 	"math"
-	"os"
 	"unsafe"
 )
 
@@ -417,5 +416,6 @@ func (f *Function) Finalise() {
 	f.AddLdaUndefined(nil)
 	f.AddReturn(nil)
 	f.constantsIndex = nil
-	_, _ = fmt.Fprintf(os.Stderr, "%s", f.DebugString())
+	// Debug output disabled - bytecode is extracted programmatically in REPL
+	// _, _ = fmt.Fprintf(os.Stderr, "%s", f.DebugString())
 }

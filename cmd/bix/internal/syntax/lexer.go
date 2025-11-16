@@ -21,7 +21,7 @@ type lexer struct {
 	eh       lexerErrorHandler
 }
 
-var numberRe = regexp.MustCompile(`^[+-]?(\d+(\.\d*)?|\.\d+)`)
+var numberRe = regexp.MustCompile(`^(\d+(\.\d*)?|\.\d+)`)
 var newlineRe = regexp.MustCompile(`^\r?\n`)
 
 func newLexer(s string, file string, eh lexerErrorHandler) *lexer {

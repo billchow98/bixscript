@@ -1,0 +1,13 @@
+# Binaries
+cmd/bix/bix
+cmd/bix/bix.exe
+cmd/bix/wasm/bixscript.wasm
+*.exe
+*.wasm
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
