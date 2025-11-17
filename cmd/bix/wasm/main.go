@@ -1,3 +1,4 @@
+//go:build js && wasm
 // +build js,wasm
 
 package main
@@ -17,12 +18,12 @@ var (
 )
 
 var (
-	repls     = make(map[int]*repl.Repl)
+	repls       = make(map[int]*repl.Repl)
 	replCounter = 0
-	replMutex  sync.Mutex
+	replMutex   sync.Mutex
 )
 
-type REPLResult struct {
+type ReplResult struct {
 	Output            string   `json:"output"`
 	Bytecode          string   `json:"bytecode"`
 	Errors            []string `json:"errors"`
@@ -30,8 +31,8 @@ type REPLResult struct {
 	PromptSymbol      string   `json:"promptSymbol"`
 }
 
-// InitREPL creates a new REPL instance and returns its ID
-func InitREPL(this js.Value, args []js.Value) interface{} {
+// InitRepl creates a new REPL instance and returns its ID
+func InitRepl(this js.Value, args []js.Value) interface{} {
 	replMutex.Lock()
 	defer replMutex.Unlock()
 
@@ -65,7 +66,7 @@ func ExecuteLine(this js.Value, args []js.Value) interface{} {
 	result := r.AddLine(line)
 
 	// Convert to JSON response
-	jsonResult := REPLResult{
+	jsonResult := ReplResult{
 		Output:            result.Output,
 		Bytecode:          result.Bytecode,
 		Errors:            result.Errors,
@@ -77,8 +78,8 @@ func ExecuteLine(this js.Value, args []js.Value) interface{} {
 	return string(jsonBytes)
 }
 
-// ResetVM clears the global state of a REPL (creates new instance)
-func ResetVM(this js.Value, args []js.Value) interface{} {
+// ResetVm clears the global state of a REPL (creates new instance)
+func ResetVm(this js.Value, args []js.Value) interface{} {
 	if len(args) < 1 {
 		return false
 	}
@@ -97,8 +98,8 @@ func ResetVM(this js.Value, args []js.Value) interface{} {
 	return false
 }
 
-// DestroyVM removes a REPL instance
-func DestroyVM(this js.Value, args []js.Value) interface{} {
+// DestroyVm removes a REPL instance
+func DestroyVm(this js.Value, args []js.Value) interface{} {
 	if len(args) < 1 {
 		return false
 	}
@@ -128,10 +129,10 @@ func main() {
 
 	// Register JavaScript functions
 	js.Global().Set("bixGetVersion", js.FuncOf(GetVersion))
-	js.Global().Set("bixInitREPL", js.FuncOf(InitREPL))
+	js.Global().Set("bixInitRepl", js.FuncOf(InitRepl))
 	js.Global().Set("bixExecuteLine", js.FuncOf(ExecuteLine))
-	js.Global().Set("bixResetVM", js.FuncOf(ResetVM))
-	js.Global().Set("bixDestroyVM", js.FuncOf(DestroyVM))
+	js.Global().Set("bixResetVm", js.FuncOf(ResetVm))
+	js.Global().Set("bixDestroyVm", js.FuncOf(DestroyVm))
 
 	// Keep the program running
 	<-c
